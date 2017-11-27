@@ -8,12 +8,12 @@
     <script src="./tween.js"></script>
     <style>
         body {
-           <div id="target1">
+          
            
             /* set margin to 0 and overflow to hidden, to go fullscreen */
             margin: 0;
             overflow: hidden;
-            </div>
+           
         }
     </style>
 </head>
@@ -266,7 +266,7 @@
       mup =false;
       mdown = false;
     }**/
-document.body.addEventListener( "touchstart", function( event ) {
+document.getElementById( "target1" ).addEventListener( "touchstart", function( event ) {
 	var touchObject = event.changedTouches[0] ;
     alert("touch");
 	var x = touchObject.pageX ;
@@ -276,5 +276,7 @@ document.body.addEventListener( "touchstart", function( event ) {
 
 </script>
 <body>
+	 <div id="target1">
+		 </div>
 </body>
 </html>
