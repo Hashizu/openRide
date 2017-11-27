@@ -266,11 +266,12 @@
       mup =false;
       mdown = false;
     }**/
- document.body.addEventListener('touchstart', function(event) {
-     var touchObject = event.changedTouches[0] ;
-  alert("touch!!");
-}, false);
- 
+document.body.addEventListener( "touchstart", function( event ) {
+	var touchObject = event.changedTouches[0] ;
+    alert("touch");
+	var x = touchObject.pageX ;
+	var y = touchObject.pageY ;
+} ) ;
 
 
 </script>
