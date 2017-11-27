@@ -27,8 +27,8 @@
     var mouse = { x: 0, y: 0 };
     var mup=false,mdown=false;
     var count=0;
-    var xsp=3,ysp=0;
-    var gravity = 0.01;
+    var xsp=3,ysp=0;    //初速度
+    var gravity = 0.02; //重力
     var cube;
     var pi = Math.PI;
     var game = true;  //true = in game
@@ -83,7 +83,7 @@
         console.log("x座標:"+cube.position.x+"  y座標:"+cube.position.y+"  z座標:"+cube.position.z);
         camera.position.x = -100;
         camera.position.y = 10;
-        camera.position.z = 20;
+        camera.position.z = 80;
         camera.lookAt(new THREE.Vector3(0, 0, -10000));
 
         var spotLight = new THREE.SpotLight(0xffffff);
@@ -176,7 +176,8 @@
 
      function render() {
 
-       frameUpdate();
+       if(game)
+        frameUpdate();
        gameCheck();
 
 
@@ -212,7 +213,7 @@
           xsp += -normal(gravity * Math.sin(vz));
           ysp += -normal(gravity * Math.cos(vz));
       }
-      goFoward(cube, xsp, ysp, 100);
+      goFoward(cube, xsp, ysp, 10);
     }
 
     function normal(nor){
