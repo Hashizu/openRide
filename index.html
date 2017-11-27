@@ -2,10 +2,10 @@
 <html class="no-js" lang="ja">
 <head>
     <title>Air Ride</title>
-    <script src="./three.js"></script>
-    <script src="./dat.gui.min.js"></script>
-    <script src="./stats.min.js"></script>
-    <script src="./tween.js"></script>
+    <script src="./libs/three.js"></script>
+    <script src="./libs/dat.gui.min.js"></script>
+    <script src="./libs/stats.min.js"></script>
+    <script src="./libs/tween.js"></script>
     <style>
         body {
             /* set margin to 0 and overflow to hidden, to go fullscreen */
@@ -255,12 +255,12 @@
 			mup = true;
 		}else{
 			mdown = true;
-		}	
+		}
 	} ) ;
 	document.body.addEventListener( "touchend", function( event ) {
 		mup =false;
 		mdown = false;
-		
+
 	});
 
 </script>
