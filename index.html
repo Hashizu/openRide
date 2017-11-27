@@ -266,7 +266,7 @@
       mup =false;
       mdown = false;
     }**/
-document.getElementById( "target1" ).addEventListener( "touchstart", function( event ) {
+document.body.addEventListener( "touchstart", function( event ) {
 	var touchObject = event.changedTouches[0] ;
     alert("touch");
 	var x = touchObject.pageX ;
