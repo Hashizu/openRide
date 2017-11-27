@@ -21,11 +21,8 @@
 <script>
 
     // global variables
-    var pi = Math.PI;
-    var renderer;
-    var scene;
-    var camera;
-    var stats;
+    var renderer,scene,camera,stats;
+
     var projector = new THREE.Projector();
     var mouse = { x: 0, y: 0 };
     var mup=false,mdown=false;
@@ -33,6 +30,7 @@
     var xsp=3,ysp=0;
     var gravity = 0.01;
     var cube;
+    var pi = Math.PI;
     var game = true;  //true = in game
 
 
@@ -62,7 +60,7 @@
       return plane;
     }
     function createPlayerMaterial() {
-        var earthTexture = THREE.ImageUtils.loadTexture("../assets/textures/wood_1-1024x1024.png");
+        var earthTexture = THREE.ImageUtils.loadTexture("./assets/textures/wood_1-1024x1024.png");
         var earthMaterial = new THREE.MeshBasicMaterial();
         earthMaterial.map = earthTexture;
         return earthMaterial;
@@ -83,10 +81,10 @@
         var cube = createPlayer();
         var plane = createFloor(0,0,0,1);
         console.log("x座標:"+cube.position.x+"  y座標:"+cube.position.y+"  z座標:"+cube.position.z);
-        camera.position.x = 0;
-        camera.position.y = 100;
-        camera.position.z = 250;
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
+        camera.position.x = -100;
+        camera.position.y = 10;
+        camera.position.z = 20;
+        camera.lookAt(new THREE.Vector3(0, 0, -10000));
 
         var spotLight = new THREE.SpotLight(0xffffff);
         spotLight.position.set(0, 600, 10);
@@ -105,51 +103,55 @@
     }
 
     /**cube goes to {vx,vy} at time in thier vercity**/
+
+    var tempx,tempy,k,ek,vz,tx,ty;
     function goFoward(cube, vx, vy, time) {
 
         if (!isTweening) {
-          var target = {x:vx,y:vy};
-          var previous = {x:0,y:0};
+          tempx=vx,tempy=vy;
+          k = Math.sqrt(tempx*tempx+tempy*tempy);
+          el = Math.atan(tempy/tempx);
+          vz = cube.rotation.z;
+            if(tempx<0 && tempy>0)
+            el+=pi/2;
+          else if(tempx<0 && tempy<0)
+            el+=pi;
+          else if(tempx<0 && tempy<0)
+            el+=3*pi/2;
+          if(vz<0)
+            vz+=2*pi;
+          tx =k*Math.cos(vz+el);
+          ty =k*Math.sin(vz+el);
+          tx = normal(tx);
+          ty = normal(ty);
+
+          var target = {x:vx,y:vy,t:tx};
+          var previous = {x:0,y:0,t:0};
           var tween = new TWEEN.Tween( {cube: cube} )
                   .to( target, time )
                   .easing(TWEEN.Easing.Linear.None)
                   .onStart(function() {
                       isTweening = true;
+
                   })
                   .onUpdate( function () {
                       cube.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
                       cube.geometry.verticesNeedUpdate = true;
                       cube.geometry.normalsNeedUpdate = true;
+                      camera.position.x += this.t-previous.t;
                       previous.x = this.x;
                       previous.y = this.y;
+                      previous.t = this.t;
+
                   })
                   .onComplete(function() {
-                    var tempx=target.x,tempy=target.y;
-                    var k = Math.sqrt(tempx*tempx+tempy*tempy);
-                    var el = Math.atan(tempy/tempx);
-                    var vz = cube.rotation.z;
-
-                    if(tempx<0 && tempy>0)
-                      el+=pi/2;
-                    else if(tempx<0 && tempy<0)
-                      el+=pi;
-                    else if(tempx<0 && tempy<0)
-                      el+=3*pi/2;
-
-                    if(vz<0)
-                      vz+=2*pi;
-
-                    var tx =k*Math.cos(vz+el);
-                    var ty =k*Math.sin(vz+el);
-
-                    tx = normal(tx);
-                    ty = normal(ty);
 
                     cube.position.x+=tx;
                     cube.position.y+=ty;
                     cube.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-target.x,-target.y,0));
                     console.log("vx: "+vx+" vy: "+vy);
                     console.log("x: "+cube.position.x+" y: "+cube.position.y);
+                    //camera.position.x = cube.position.x;
                       isTweening = false;
                   })
                   .start();
@@ -177,6 +179,7 @@
        frameUpdate();
        gameCheck();
 
+
        stats.update();
        TWEEN.update();
        renderer.render(scene, camera);
@@ -189,28 +192,31 @@
         game = false;
       }
 
-}
+    }
+
 
     function frameUpdate(){
       var cube = scene.getObjectByName('cube');
-      if(mup && cube.rotation.z < 2*pi/5){
-        scene.getObjectByName('cube').rotation.z += 0.005*pi;
-      }
-      else if(-pi/2<pi){
-        scene.getObjectByName('cube').rotation.z += -0.005*pi;
-      }
+      if (!isTweening) {
+        if(mup && cube.rotation.z < 2*pi/5){
+          scene.getObjectByName('cube').rotation.z += 0.005*pi;
+        }
+        else if(-pi/2<pi){
+          scene.getObjectByName('cube').rotation.z += -0.005*pi;
+        }
 
-      var vz = cube.rotation.z;
-      if(vz<0){
-        vz+= pi*2;
+        var vz = cube.rotation.z;
+        if(vz<0){
+          vz+= pi*2;
+        }
+          xsp += -normal(gravity * Math.sin(vz));
+          ysp += -normal(gravity * Math.cos(vz));
       }
-        xsp += -normal(gravity * Math.sin(vz));
-        ysp += -normal(gravity * Math.cos(vz));
       goFoward(cube, xsp, ysp, 100);
     }
 
     function normal(nor){
-      return Math.round(nor*1000)/1000;
+      return Math.round(nor*100000)/100000;
     }
 
     /**
