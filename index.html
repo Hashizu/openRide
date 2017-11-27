@@ -244,6 +244,7 @@
         mdown = false;
     };
     /** catch touch **/
+    /**
     document.getElementById( "target" ).ontouchstart = function( event ) {
     	// タッチの情報を含むオブジェクト
     	var touchObject = event.changedTouches[0] ;
@@ -264,8 +265,11 @@
       console.log("mouse up");
       mup =false;
       mdown = false;
-    }
-
+    }**/
+ document.getElementById( "target" ).addEventListener('touchstart', function(event) {
+  alert("touch!!");
+}, false);
+ 
 
 
 </script>
