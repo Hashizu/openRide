@@ -31,6 +31,7 @@
     var count=0;
     var xsp=3,ysp=0;
     var gravity = 0.01;
+    var cube;
 
 
     var isTweening = false;
@@ -38,7 +39,7 @@
     function createCube() {
         var cubeGeometry = new THREE.BoxGeometry(5, 2, 5);
         var cubeMaterial = createPlayerMaterial();
-        var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         //cube.castShadow = true;
         cube.name = 'cube';
         cube.position = new THREE.Vector3(-100, 10, 0);
@@ -172,7 +173,8 @@
      function render() {
        count++;
        frameUpdate();
-
+       if(cube.position.y<0)
+           alert("game end");
        stats.update();
 
        TWEEN.update();
