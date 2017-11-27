@@ -249,6 +249,8 @@
     	// 位置座標を取得する
     	mouse.x = touchObject.pageX ;	// 水平方向の位置座標
     	mouse.y = touchObject.pageY ;	// 垂直方向の位置座標
+        var vector = new THREE.Vector3( mouse.x, mouse.y ,1);
+        
       if(vector.y <  window.innerHeight/2){   //when upper side click
           console.log("click upper side x: "+vector.x+" y: "+vector.y);
           mup = true;
