@@ -33,11 +33,12 @@
     var xsp=3,ysp=0;
     var gravity = 0.01;
     var cube;
+    var game = true;  //true = in game
 
 
     var isTweening = false;
 
-    function createCube() {
+    function createPlayer() {
         var cubeGeometry = new THREE.BoxGeometry(5, 2, 5);
         var cubeMaterial = createPlayerMaterial();
         cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
@@ -47,7 +48,7 @@
         scene.add(cube);
         return cube;
     }
-    function createPlane(x,y,z,rot){
+    function createFloor(x,y,z,rot){
       var planeGeometry = new THREE.PlaneGeometry(600, 800, 100, 100);
       var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
       var plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -79,8 +80,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMapEnabled = true;
 
-        var cube = createCube();
-        var plane = createPlane(0,0,0,1);
+        var cube = createPlayer();
+        var plane = createFloor(0,0,0,1);
         console.log("x座標:"+cube.position.x+"  y座標:"+cube.position.y+"  z座標:"+cube.position.z);
         camera.position.x = 0;
         camera.position.y = 100;
@@ -172,23 +173,30 @@
      */
 
      function render() {
-       count++;
-       frameUpdate();
-       if(-4<cube.position.y&&cube.position.y<0)
-           alert("game end");
-       stats.update();
 
+       frameUpdate();
+       gameCheck();
+
+       stats.update();
        TWEEN.update();
        renderer.render(scene, camera);
        requestAnimationFrame(render);
     }
 
+    function gameCheck(){
+      if(game&&cube.position.y<0){
+        alert("   Landing!!!\nScore: "+normal(cube.position.x+100)+"m");
+        game = false;
+      }
+
+}
+
     function frameUpdate(){
       var cube = scene.getObjectByName('cube');
-      if(mup){
+      if(mup && cube.rotation.z < 2*pi/5){
         scene.getObjectByName('cube').rotation.z += 0.005*pi;
       }
-      else if(mdown){
+      else if(-pi/2<pi){
         scene.getObjectByName('cube').rotation.z += -0.005*pi;
       }
 
@@ -196,8 +204,6 @@
       if(vz<0){
         vz+= pi*2;
       }
-
-
         xsp += -normal(gravity * Math.sin(vz));
         ysp += -normal(gravity * Math.cos(vz));
       goFoward(cube, xsp, ysp, 100);
@@ -244,8 +250,8 @@
         mup =false;
         mdown = false;
     };
-
-	document.body.addEventListener( "touchstart", function( event ) {
+    /** touch on upper then mup = true **/
+	  document.body.addEventListener( "touchstart", function( event ) {
 		var touchObject = event.changedTouches[0] ;
 		var x = touchObject.pageX ;
 		var y = touchObject.pageY ;
@@ -257,7 +263,7 @@
 			mdown = true;
 		}
 	} ) ;
-	document.body.addEventListener( "touchend", function( event ) {
+	  document.body.addEventListener( "touchend", function( event ) {
 		mup =false;
 		mdown = false;
 
