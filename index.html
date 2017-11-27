@@ -173,7 +173,7 @@
      function render() {
        count++;
        frameUpdate();
-       if(cube.position.y<0)
+       if(-4<cube.position.y&&cube.position.y<0)
            alert("game end");
        stats.update();
 
@@ -247,7 +247,7 @@
     document.getElementById( "target" ).ontouchstart = function( event ) {
     	// タッチの情報を含むオブジェクト
     	var touchObject = event.changedTouches[0] ;
-
+        alert("touch!!");
     	// 位置座標を取得する
     	mouse.x = touchObject.pageX ;	// 水平方向の位置座標
     	mouse.y = touchObject.pageY ;	// 垂直方向の位置座標
