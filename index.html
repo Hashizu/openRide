@@ -6,6 +6,8 @@
     <script src="./libs/dat.gui.min.js"></script>
     <script src="./libs/stats.min.js"></script>
     <script src="./libs/tween.js"></script>
+    <script src="./gameCube.js"></script>
+
     <style>
         body {
             /* set margin to 0 and overflow to hidden, to go fullscreen */
@@ -39,7 +41,7 @@
 
     var startpos = new THREE.Vector3(-100,10,0);
 
-    var cube;
+    var player;
     var pi = Math.PI;
     var game = true;  //true = in game
 
@@ -47,27 +49,27 @@
     var isTweening = false;
 
     function createPlayer() {
-        var cubeGeometry = new THREE.BoxGeometry(5, 2, 5);
-        var cubeMaterial = createPlayerMaterial();
-        cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        //cube.castShadow = true;
-        cube.name = 'cube';
-        cube.position = startpos;
-        scene.add(cube);
-        return cube;
+        var playerGeometry = new THREE.BoxGeometry(5, 2, 5);
+        var playerMaterial = createPlayerMaterial();
+        player = new THREE.Mesh(playerGeometry, playerMaterial);
+        //player.castShadow = true;
+        player.name = 'player';
+        player.position = startpos;
+        scene.add(player);
+        return player;
     }
     function createFloor(x,y,z,rot){
-      var planeGeometry = new THREE.PlaneGeometry(1500, 80, 100, 100);
-      var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-      var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-      plane.receiveShadow = true;
-      plane.rotation.x = -0.5 * pi * rot;
+      var FloorGeometry = new THREE.PlaneGeometry(1500, 80, 500, 100);
+      var FloorMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+      var Floor = new THREE.Mesh(FloorGeometry, FloorMaterial);
+      Floor.receiveShadow = true;
+      Floor.rotation.x = -0.5 * pi * rot;
 
-      plane.position.x = x;
-      plane.position.y = y;
-      plane.position.z = z;
-      scene.add(plane);
-      return plane;
+      Floor.position.x = x;
+      Floor.position.y = y;
+      Floor.position.z = z;
+      scene.add(Floor);
+      return Floor;
     }
     function createPlayerMaterial() {
         var earthTexture = THREE.ImageUtils.loadTexture("./assets/textures/wood_1-1024x1024.png");
@@ -79,48 +81,52 @@
      * Initializes the scene, camera and objects. Called when the window is
      * loaded by using window.onload (see below)
      */
+
     function init() {
-
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer();
-        renderer.setClearColor(0xeeeeee, 1.0);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMapEnabled = true;
-
-        var cube = createPlayer();
-        var plane = createFloor(0,0,0,1);
-        console.log("x座標:"+cube.position.x+"  y座標:"+cube.position.y+"  z座標:"+cube.position.z);
-        camera.position = caminit;
-
-        camera.lookAt(sight);
-
-        var spotLight = new THREE.SpotLight(0xffffff);
-        spotLight.position.set(0, 600, 10);
-        spotLight.shadowCameraNear = 100;
-        spotLight.shadowCameraFar = 20;
-        spotLight.castShadow = true;
-        scene.add(spotLight);
-
-        addStatsObject();
-        // add the output of the renderer to the html element
-        document.body.appendChild(renderer.domElement);
-        // call the render function, after the first render, interval is determined
-        // by requestAnimationFrame
-
-        render();
+        init1();
     }
 
-    /**cube goes to {vx,vy} at time in thier vercity**/
+    function game(){
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setClearColor(0xeeeeee, 1.0);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMapEnabled = true;
+
+      var player = createPlayer();
+      var Floor = createFloor(0,0,0,1);
+      console.log("x座標:"+player.position.x+"  y座標:"+player.position.y+"  z座標:"+player.position.z);
+      camera.position = caminit;
+
+      camera.lookAt(sight);
+
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(0, 600, 10);
+      spotLight.shadowCameraNear = 100;
+      spotLight.shadowCameraFar = 20;
+      spotLight.castShadow = true;
+      scene.add(spotLight);
+
+      addStatsObject();
+      // add the output of the renderer to the html element
+      document.body.appendChild(renderer.domElement);
+      // call the render function, after the first render, interval is determined
+      // by requestAnimationFrame
+
+      render();
+    }
+
+    /**player goes to {vx,vy} at time in thier vercity**/
 
     var tempx,tempy,k,ek,vz,tx,ty;
-    function goFoward(cube, vx, vy, time) {
+    function goFoward(player, vx, vy, time) {
 
         if (!isTweening) {
           tempx=vx,tempy=vy;
           k = Math.sqrt(tempx*tempx+tempy*tempy);
           el = Math.atan(tempy/tempx);
-          vz = cube.rotation.z;
+          vz = player.rotation.z;
             if(tempx<0 && tempy>0)
             el+=pi/2;
           else if(tempx<0 && tempy<0)
@@ -136,7 +142,7 @@
 
           var target = {x:vx,y:vy,t:tx};
           var previous = {x:0,y:0,t:0};
-          var tween = new TWEEN.Tween( {cube: cube} )
+          var tween = new TWEEN.Tween( {player: player} )
                   .to( target, time )
                   .easing(TWEEN.Easing.Linear.None)
                   .onStart(function() {
@@ -144,9 +150,9 @@
 
                   })
                   .onUpdate( function () {
-                      cube.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
-                      cube.geometry.verticesNeedUpdate = true;
-                      cube.geometry.normalsNeedUpdate = true;
+                      player.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
+                      player.geometry.verticesNeedUpdate = true;
+                      player.geometry.normalsNeedUpdate = true;
                       camera.position.x += this.t-previous.t;
                       previous.x = this.x;
                       previous.y = this.y;
@@ -155,11 +161,11 @@
                   })
                   .onComplete(function() {
 
-                    cube.position.x+=tx;
-                    cube.position.y+=ty;
-                    cube.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-target.x,-target.y,0));
+                    player.position.x+=tx;
+                    player.position.y+=ty;
+                    player.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-target.x,-target.y,0));
                     //console.log("vx: "+vx+" vy: "+vy);
-                    //console.log("x: "+cube.position.x+" y: "+cube.position.y);
+                    //console.log("x: "+player.position.x+" y: "+player.position.y);
 
                       isTweening = false;
                   })
@@ -195,31 +201,33 @@
     }
 
     function gameCheck(){
-      if(game&&cube.position.y<0){
-        alert("   Landing!!!\nScore: "+normal(cube.position.x+100)+"m");
+      if(game&&player.position.y<0){
+        alert("   Landing!!!\nScore: "+normal(player.position.x+100)+"m");
         game = false;
       }
     }
 
-
     function frameUpdate(){
-      var cube = scene.getObjectByName('cube');
+
       if (!isTweening) {
-        if(mup && cube.rotation.z < 2*pi/5){
-          scene.getObjectByName('cube').rotation.z += 0.005*pi;
+        if(mup && player.rotation.z < 2*pi/5){
+          player.rotation.z += 0.005*pi;
         }
         else if(-pi/2<pi){
-          scene.getObjectByName('cube').rotation.z += -0.005*pi;
+          player.rotation.z += -0.002*pi;
+        }
+        if(mdown){
+          player.rotation.z += -0.002*pi;
         }
 
-        var vz = cube.rotation.z;
+        var vz = player.rotation.z;
         if(vz<0){
           vz+= pi*2;
         }
           xsp += -normal(gravity * Math.sin(vz));
           ysp += -normal(gravity * Math.cos(vz));
       }
-      goFoward(cube, xsp, ysp, 10);
+      goFoward(player, xsp, ysp, 10);
     }
 
     function normal(nor){
