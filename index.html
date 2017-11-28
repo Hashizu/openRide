@@ -29,6 +29,16 @@
     var count=0;
     var xsp=3,ysp=0;    //初速度
     var gravity = 0.02; //重力
+
+    //* 一人称 *//
+    //var sight =new THREE.Vector3(10000,0,0);
+    //var caminit = new THREE.Vector3(-200,10,0);
+
+    var sight =new THREE.Vector3(0,0,0);
+    var caminit = new THREE.Vector3(-100,300,500);
+
+    var startpos = new THREE.Vector3(-100,10,0);
+
     var cube;
     var pi = Math.PI;
     var game = true;  //true = in game
@@ -42,12 +52,12 @@
         cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         //cube.castShadow = true;
         cube.name = 'cube';
-        cube.position = new THREE.Vector3(-100, 10, 0);
+        cube.position = startpos;
         scene.add(cube);
         return cube;
     }
     function createFloor(x,y,z,rot){
-      var planeGeometry = new THREE.PlaneGeometry(600, 800, 100, 100);
+      var planeGeometry = new THREE.PlaneGeometry(1500, 80, 100, 100);
       var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
       var plane = new THREE.Mesh(planeGeometry, planeMaterial);
       plane.receiveShadow = true;
@@ -81,10 +91,9 @@
         var cube = createPlayer();
         var plane = createFloor(0,0,0,1);
         console.log("x座標:"+cube.position.x+"  y座標:"+cube.position.y+"  z座標:"+cube.position.z);
-        camera.position.x = -100;
-        camera.position.y = 10;
-        camera.position.z = 80;
-        camera.lookAt(new THREE.Vector3(0, 0, -10000));
+        camera.position = caminit;
+
+        camera.lookAt(sight);
 
         var spotLight = new THREE.SpotLight(0xffffff);
         spotLight.position.set(0, 600, 10);
@@ -149,9 +158,9 @@
                     cube.position.x+=tx;
                     cube.position.y+=ty;
                     cube.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-target.x,-target.y,0));
-                    console.log("vx: "+vx+" vy: "+vy);
-                    console.log("x: "+cube.position.x+" y: "+cube.position.y);
-                    //camera.position.x = cube.position.x;
+                    //console.log("vx: "+vx+" vy: "+vy);
+                    //console.log("x: "+cube.position.x+" y: "+cube.position.y);
+
                       isTweening = false;
                   })
                   .start();
@@ -175,11 +184,9 @@
      */
 
      function render() {
-
+       gameCheck();
        if(game)
         frameUpdate();
-       gameCheck();
-
 
        stats.update();
        TWEEN.update();
@@ -192,7 +199,6 @@
         alert("   Landing!!!\nScore: "+normal(cube.position.x+100)+"m");
         game = false;
       }
-
     }
 
 
@@ -238,7 +244,6 @@
     /** mouse click on upper then mup = true **/
     window.onmousedown = function (ev){
         if (ev.target == renderer.domElement) {
-
             //マウス座標2D変換
             var rect = ev.target.getBoundingClientRect();
             mouse.x =  ev.clientX - rect.left;
@@ -258,23 +263,22 @@
         mdown = false;
     };
     /** touch on upper then mup = true **/
-	  document.body.addEventListener( "touchstart", function( event ) {
-		var touchObject = event.changedTouches[0] ;
-		var x = touchObject.pageX ;
-		var y = touchObject.pageY ;
-		var vector = new THREE.Vector3( x, y ,1);
-		 if(vector.y <  window.innerHeight/2){   //when upper side click
-			console.log("click upper side x: "+vector.x+" y: "+vector.y);
-			mup = true;
-		}else{
-			mdown = true;
-		}
-	} ) ;
+	  document.body.addEventListener( "touchstart", function( event ){
+  		var touchObject = event.changedTouches[0] ;
+  		var x = touchObject.pageX ;
+  		var y = touchObject.pageY ;
+  		var vector = new THREE.Vector3( x, y ,1);
+  		 if(vector.y <  window.innerHeight/2){   //when upper side click
+  			console.log("click upper side x: "+vector.x+" y: "+vector.y);
+  			mup = true;
+  		}else{
+  			mdown = true;
+  		}
+    });
 	  document.body.addEventListener( "touchend", function( event ) {
-		mup =false;
-		mdown = false;
-
-	});
+  		mup =false;
+  		mdown = false;
+	   });
 
 </script>
 
