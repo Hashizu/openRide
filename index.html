@@ -83,10 +83,6 @@
      */
 
     function init() {
-        init1();
-    }
-
-    function game(){
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer();
@@ -115,6 +111,10 @@
       // by requestAnimationFrame
 
       render();
+    }
+
+    function game(){
+
     }
 
     /**player goes to {vx,vy} at time in thier vercity**/
