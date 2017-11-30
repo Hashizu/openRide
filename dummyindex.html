@@ -1,0 +1,293 @@
+<!doctype html>
+<html class="no-js" lang="ja">
+<head>
+    <title>Air Ride</title>
+    <script src="./libs/three.js"></script>
+    <script src="./libs/dat.gui.min.js"></script>
+    <script src="./libs/stats.min.js"></script>
+    <script src="./libs/tween.js"></script>
+    <script src="./gameCube.js"></script>
+
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+	<body>
+	 <div id="target1">
+		 </div>
+</body>
+<script>
+
+    // global variables
+    var renderer,scene,camera,stats;
+
+    var projector = new THREE.Projector();
+    var mouse = { x: 0, y: 0 };
+    var mup=false,mdown=false;
+    var count=0;
+    var xsp=3,ysp=0;    //初速度
+    var gravity = 0.02; //重力
+
+    //* 一人称 *//
+    //var sight =new THREE.Vector3(10000,0,0);
+    //var caminit = new THREE.Vector3(-200,10,0);
+
+    var sight =new THREE.Vector3(0,0,0);
+    var caminit = new THREE.Vector3(-100,300,500);
+
+    var startpos = new THREE.Vector3(-100,10,0);
+
+    var player;
+    var pi = Math.PI;
+    var game = true;  //true = in game
+
+
+    var isTweening = false;
+
+    function createPlayer() {
+        var playerGeometry = new THREE.BoxGeometry(5, 2, 5);
+        var playerMaterial = createPlayerMaterial();
+        player = new THREE.Mesh(playerGeometry, playerMaterial);
+        //player.castShadow = true;
+        player.name = 'player';
+        player.position = startpos;
+        scene.add(player);
+        return player;
+    }
+    function createFloor(x,y,z,rot){
+      var FloorGeometry = new THREE.PlaneGeometry(1500, 80, 500, 100);
+      var FloorMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+      var Floor = new THREE.Mesh(FloorGeometry, FloorMaterial);
+      Floor.receiveShadow = true;
+      Floor.rotation.x = -0.5 * pi * rot;
+
+      Floor.position.x = x;
+      Floor.position.y = y;
+      Floor.position.z = z;
+      scene.add(Floor);
+      return Floor;
+    }
+    function createPlayerMaterial() {
+        var earthTexture = THREE.ImageUtils.loadTexture("./assets/textures/wood_1-1024x1024.png");
+        var earthMaterial = new THREE.MeshBasicMaterial();
+        earthMaterial.map = earthTexture;
+        return earthMaterial;
+    }
+    /**
+     * Initializes the scene, camera and objects. Called when the window is
+     * loaded by using window.onload (see below)
+     */
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setClearColor(0xeeeeee, 1.0);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMapEnabled = true;
+
+      var player = createPlayer();
+      var Floor = createFloor(0,0,0,1);
+      console.log("x座標:"+player.position.x+"  y座標:"+player.position.y+"  z座標:"+player.position.z);
+      camera.position = caminit;
+
+      camera.lookAt(sight);
+
+      var spotLight = new THREE.SpotLight(0xffffff);
+      spotLight.position.set(0, 600, 10);
+      spotLight.shadowCameraNear = 100;
+      spotLight.shadowCameraFar = 20;
+      spotLight.castShadow = true;
+      scene.add(spotLight);
+
+      addStatsObject();
+      // add the output of the renderer to the html element
+      document.body.appendChild(renderer.domElement);
+      // call the render function, after the first render, interval is determined
+      // by requestAnimationFrame
+
+      render();
+    }
+
+    function game(){
+
+    }
+
+    /**player goes to {vx,vy} at time in thier vercity**/
+
+    var tempx,tempy,k,ek,vz,tx,ty;
+    function goFoward(player, vx, vy, time) {
+
+        if (!isTweening) {
+          tempx=vx,tempy=vy;
+          k = Math.sqrt(tempx*tempx+tempy*tempy);
+          el = Math.atan(tempy/tempx);
+          vz = player.rotation.z;
+            if(tempx<0 && tempy>0)
+            el+=pi/2;
+          else if(tempx<0 && tempy<0)
+            el+=pi;
+          else if(tempx<0 && tempy<0)
+            el+=3*pi/2;
+          if(vz<0)
+            vz+=2*pi;
+          tx =k*Math.cos(vz+el);
+          ty =k*Math.sin(vz+el);
+          tx = normal(tx);
+          ty = normal(ty);
+
+          var target = {x:vx,y:vy,t:tx};
+          var previous = {x:0,y:0,t:0};
+          var tween = new TWEEN.Tween( {player: player} )
+                  .to( target, time )
+                  .easing(TWEEN.Easing.Linear.None)
+                  .onStart(function() {
+                      isTweening = true;
+
+                  })
+                  .onUpdate( function () {
+                      player.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
+                      player.geometry.verticesNeedUpdate = true;
+                      player.geometry.normalsNeedUpdate = true;
+                      camera.position.x += this.t-previous.t;
+                      previous.x = this.x;
+                      previous.y = this.y;
+                      previous.t = this.t;
+
+                  })
+                  .onComplete(function() {
+
+                    player.position.x+=tx;
+                    player.position.y+=ty;
+                    player.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-target.x,-target.y,0));
+                    //console.log("vx: "+vx+" vy: "+vy);
+                    //console.log("x: "+player.position.x+" y: "+player.position.y);
+
+                      isTweening = false;
+                  })
+                  .start();
+
+        }
+    }
+
+    function addStatsObject() {
+        stats = new Stats();
+        stats.setMode(0);
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+
+        document.body.appendChild( stats.domElement );
+    }
+
+    /**
+     * Called when the scene needs to be rendered. Delegates to requestAnimationFrame
+     * for future renders
+     */
+
+     function render() {
+       gameCheck();
+       if(game)
+        frameUpdate();
+
+       stats.update();
+       TWEEN.update();
+       renderer.render(scene, camera);
+       requestAnimationFrame(render);
+    }
+
+    function gameCheck(){
+      if(game&&player.position.y<0){
+        alert("   Landing!!!\nScore: "+normal(player.position.x+100)+"m");
+        game = false;
+      }
+    }
+
+    function frameUpdate(){
+
+      if (!isTweening) {
+        if(mup && player.rotation.z < 2*pi/5){
+          player.rotation.z += 0.005*pi;
+        }
+        else if(-pi/2<pi){
+          player.rotation.z += -0.002*pi;
+        }
+        if(mdown){
+          player.rotation.z += -0.002*pi;
+        }
+
+        var vz = player.rotation.z;
+        if(vz<0){
+          vz+= pi*2;
+        }
+          xsp += -normal(gravity * Math.sin(vz));
+          ysp += -normal(gravity * Math.cos(vz));
+      }
+      goFoward(player, xsp, ysp, 10);
+    }
+
+    function normal(nor){
+      return Math.round(nor*100000)/100000;
+    }
+
+    /**
+     * Function handles the resize event. This make sure the camera and the renderer
+     * are updated at the correct moment.
+     */
+    function handleResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // calls the init function when the window is done loading.
+    window.onload = init;
+    // calls the handleResize function when the window is resized
+    window.addEventListener('resize', handleResize, false);
+
+    /** mouse click on upper then mup = true **/
+    window.onmousedown = function (ev){
+        if (ev.target == renderer.domElement) {
+            //マウス座標2D変換
+            var rect = ev.target.getBoundingClientRect();
+            mouse.x =  ev.clientX - rect.left;
+            mouse.y =  ev.clientY - rect.top;
+            var vector = new THREE.Vector3( mouse.x, mouse.y ,1);
+            if(vector.y <  window.innerHeight/2){   //when upper side click
+                console.log("click upper side x: "+vector.x+" y: "+vector.y);
+                mup = true;
+            }else{
+                mdown = true;
+            }
+        }
+    }
+    window.onmouseup = function(ev){
+        console.log("mouse up");
+        mup =false;
+        mdown = false;
+    };
+    /** touch on upper then mup = true **/
+	  document.body.addEventListener( "touchstart", function( event ){
+  		var touchObject = event.changedTouches[0] ;
+  		var x = touchObject.pageX ;
+  		var y = touchObject.pageY ;
+  		var vector = new THREE.Vector3( x, y ,1);
+  		 if(vector.y <  window.innerHeight/2){   //when upper side click
+  			console.log("click upper side x: "+vector.x+" y: "+vector.y);
+  			mup = true;
+  		}else{
+  			mdown = true;
+  		}
+    });
+	  document.body.addEventListener( "touchend", function( event ) {
+  		mup =false;
+  		mdown = false;
+	   });
+
+</script>
+
+</html>
