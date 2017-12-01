@@ -6,7 +6,11 @@
     <script src="./libs/dat.gui.min.js"></script>
     <script src="./libs/stats.min.js"></script>
     <script src="./libs/tween.js"></script>
-    <script src="./gameCube.js"></script>
+    <script src="./libs/EffectComposer.js"></script>
+    <script src="./libs/RenderPass.js"></script>
+    <script src="./libs/CopyShader.js"></script>
+    <script src="./libs/ShaderPass.js"></script>
+    <script src="./libs/MaskPass.js"></script>
 
     <style>
         body {
@@ -29,7 +33,6 @@
     var mouse = { x: 0, y: 0 };
     var mup=false,mdown=false;
 
-
     var xsp=3,ysp=0;    //初速度
     var gravity = 0.01; //重力
 
@@ -47,6 +50,12 @@
     var game = false;  //true = in game
     var isTweening = false;
 
+    // background stuff
+    var cameraBG;
+    var sceneBG;
+    var composer;
+    var clock;
+
     /** ここの値は書き換える  **/
     function setup(){
       xsp=3;
@@ -54,9 +63,11 @@
       player.position = new THREE.Vector3(-100,10,0);
       player.rotation.z = pi/6;
       camera.position = new THREE.Vector3(-100,300,500);
-      game = true;
-      if(mdown)
+
+      if(mdown){
         console.log("setup pos: "+player.rotation.z);
+        game = true;
+      }
     }
 
     function createPlayer() {
@@ -96,6 +107,7 @@
     function init() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
       renderer = new THREE.WebGLRenderer();
       renderer.setClearColor(0xeeeeee, 1.0);
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -116,11 +128,37 @@
       scene.add(spotLight);
 
       addStatsObject();
+
+
+      cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
+      cameraBG.position.z = 50;
+      sceneBG = new THREE.Scene();
+
+      var materialColor = new THREE.MeshBasicMaterial({ map: THREE.ImageUtils.loadTexture("./assets/textures/starry_background.jpg"), depthTest: false });
+      var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialColor);
+      bgPlane.position.z = 0;
+      bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
+      sceneBG.add(bgPlane);
+
+      // setup the composer steps
+      // first render the background
+      var bgPass = new THREE.RenderPass(sceneBG, cameraBG);
+      // next render the scene (rotating earth), without clearing the current output
+      var renderPass = new THREE.RenderPass(scene, camera);
+      renderPass.clear = false;
+      // finally copy the result to the screen
+      var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
+      effectCopy.renderToScreen = true;
+
+      // add these passes to the composer
+      composer = new THREE.EffectComposer(renderer);
+      composer.addPass(bgPass);
+      composer.addPass(renderPass);
+      composer.addPass(effectCopy);
+
+
       // add the output of the renderer to the html element
       document.body.appendChild(renderer.domElement);
-      // call the render function, after the first render, interval is determined
-      // by requestAnimationFrame
-
       render();
     }
 
@@ -202,13 +240,17 @@
          frameUpdate();
        }else{
          setup();
-      }
+       }
 
        stats.update();
        TWEEN.update();
-       renderer.render(scene, camera);
+       //renderer.render(scene, camera);
+       // and render the scene, renderer shouldn't autoclear, we let the composer steps do that themselves
+       // rendering is now done through the composer, which executes the render steps
+       renderer.autoClear = false;
+       composer.render();
        requestAnimationFrame(render);
-    }
+     }
 
 
     function gameCheck(){
@@ -237,9 +279,9 @@
         }
           xsp += -normal(gravity * Math.sin(vz));
           ysp += -normal(gravity * Math.cos(vz));
-  }
-      goFoward(player, xsp, ysp*0.7, 10);
-    }
+        }
+        goFoward(player, xsp, ysp*0.7, 10);
+      }
 
     function normal(nor){
       return Math.round(nor*100000)/100000;
