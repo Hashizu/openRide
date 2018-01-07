@@ -2,10 +2,10 @@
 <html class="no-js" lang="ja">
 <head>
     <title>Air Ride</title>
+    <script src="./libs/tween.js"></script>
     <script src="./libs/three.js"></script>
     <script src="./libs/dat.gui.min.js"></script>
     <script src="./libs/stats.min.js"></script>
-    <script src="./libs/tween.js"></script>
     <script src="./libs/EffectComposer.js"></script>
     <script src="./libs/RenderPass.js"></script>
     <script src="./libs/CopyShader.js"></script>
@@ -42,10 +42,12 @@
 
     var sight =new THREE.Vector3(0,0,0);
     var caminit = new THREE.Vector3(-100,300,500);
-
     var startpos = new THREE.Vector3(-100,10,0);
 
     var player;
+    var ball;
+    var ballb;
+
     var pi = Math.PI;
     var game = false;  //true = in game
     var isTweening = false;
@@ -55,6 +57,8 @@
     var sceneBG;
     var composer;
     var clock;
+    var tweenb;
+    var tweenBackb;
 
     /** ここの値は書き換える  **/
     function setup(){
@@ -62,8 +66,16 @@
       ysp=0;
       player.position = new THREE.Vector3(-100,10,0);
       player.rotation.z = pi/6;
-      camera.position = new THREE.Vector3(-100,300,500);
 
+      //game mode
+        camera.position = new THREE.Vector3(-150,30,0);
+        sight =new THREE.Vector3(1000,-100,0);
+
+      // debug mode
+        //camera.position = new THREE.Vector3(-100,800,500);
+        //sight =new THREE.Vector3(0,0,-100);
+
+      camera.lookAt(sight);
       if(mdown){
         console.log("setup pos: "+player.rotation.z);
         game = true;
@@ -80,8 +92,16 @@
         scene.add(player);
         return player;
     }
+    function createBall(x,y,z,size,colo) {
+        var ballGeometry = new THREE.SphereGeometry(size);
+        var ballMaterial =   new THREE.MeshLambertMaterial({color: colo});
+        ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        ball.position = new THREE.Vector3(x,y,z);;
+        scene.add(ball);
+    }
+
     function createFloor(x,y,z,rot){
-      var FloorGeometry = new THREE.PlaneGeometry(1500, 80, 500, 100);
+      var FloorGeometry = new THREE.PlaneGeometry(3000, 80, 500, 100);
       var FloorMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
       var Floor = new THREE.Mesh(FloorGeometry, FloorMaterial);
       Floor.receiveShadow = true;
@@ -99,6 +119,12 @@
         earthMaterial.map = earthTexture;
         return earthMaterial;
     }
+    function createBallMaterial() {
+        var ballTexture =  new THREE.MeshLambertMaterial({color: 0x6666cc});
+        var ballMaterial = new THREE.MeshBasicMaterial();
+        ballMaterial.map = ballTexture;
+        return ballMaterial;
+    }
     /**
      * Initializes the scene, camera and objects. Called when the window is
      * loaded by using window.onload (see below)
@@ -115,20 +141,55 @@
 
       var player = createPlayer();
       var Floor = createFloor(0,0,0,1);
+
+      for(var i = 0; i<20;i++){
+        createBall(100*i,  0, 40,5,0x000000);
+        createBall(100*i,  0,-40,5,0x000000);
+        createBall(100*i,100, 40,5,0xff0022);
+        createBall(100*i,100,-40,5,0xff0022);
+        createBall(100*i,200, 40,5,0xffffff);
+        createBall(100*i,200,-40,5,0xffffff);
+        createBall(100*i,300, 40,5,0x4444ff);
+        createBall(100*i,300,-40,5,0x4444ff);
+        createBall(100*i,400, 40,5,0x333333);
+        createBall(100*i,400,-40,5,0x333333);
+        createBall(100*i,500, 40,5,0xffffff);
+        createBall(100*i,500,-40,5,0xffffff);
+      }
+
+
       console.log("x座標:"+player.position.x+"  y座標:"+player.position.y+"  z座標:"+player.position.z);
       camera.position = caminit;
 
       camera.lookAt(sight);
 
       var spotLight = new THREE.SpotLight(0xffffff);
-      spotLight.position.set(0, 600, 10);
-      spotLight.shadowCameraNear = 100;
-      spotLight.shadowCameraFar = 20;
-      spotLight.castShadow = true;
-      scene.add(spotLight);
+        spotLight.position.set(0, 600, 10);
+        spotLight.shadowCameraNear = 100;
+        spotLight.shadowCameraFar = 20;
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+      var spotLight1 = new THREE.SpotLight(0x0010e0);
+        spotLight1.position.set(-500, 600, 10);
+        spotLight1.shadowCameraNear = 100;
+        spotLight1.shadowCameraFar = 20;
+        spotLight1.castShadow = true;
+        scene.add(spotLight1);
+      var spotLight2 = new THREE.SpotLight(0x2000e2);
+        spotLight2.position.set(2500, 800, 10);
+        spotLight2.shadowCameraNear = 100;
+        spotLight2.shadowCameraFar = 20;
+        spotLight2.castShadow = true;
+        scene.add(spotLight2);
+      var spotLight3 = new THREE.SpotLight(0xaaaae2);
+        spotLight3.position.set(200, 1500, 0);
+        spotLight3.shadowCameraNear = 100;
+        spotLight3.shadowCameraFar = 20;
+        spotLight3.castShadow = true;
+        scene.add(spotLight3);
+
 
       addStatsObject();
-
 
       cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
       cameraBG.position.z = 50;
@@ -156,13 +217,66 @@
       composer.addPass(renderPass);
       composer.addPass(effectCopy);
 
-
       // add the output of the renderer to the html element
       document.body.appendChild(renderer.domElement);
+
+
       render();
     }
 
+    var previous = {x:0,y:0};
     /**player goes to {vx,vy} at time in thier vercity**/
+    function backanime(){
+
+  		//new TWEEN.Tween(ここの中身が)トゥイーンして数値が変わる
+  		 var tweenb = new TWEEN.Tween({ballb:ballb})
+  			.to({x: 0, y: 50}, 2000)
+  			.easing(TWEEN.Easing.Bounce.In)
+        .onStart(function(){
+          //previous = {x:0,y:0};
+        })
+  			.onUpdate( function (){
+          //ballb.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
+          ballb.position.y += this.y - previous.y;
+          //ballb.geometry.verticesNeedUpdate = true;
+          //ballb.geometry.normalsNeedUpdate = true;
+          previous.x = this.x;
+          previous.y = this.y;
+          //console.log("update prev"+previous.y);
+        }).onComplete(function() {
+          this.x=0,this.y=0;
+          previous = {x:0,y:0};
+          tweenBackb.start();
+        }).start();
+
+
+
+  		//もう１つのトゥイーン設定。戻ってくる動きの方
+  		var tweenBackb = new TWEEN.Tween({ballb:ballb})
+  			.to({x: 0, y: -50}, 2000)
+  			.easing(TWEEN.Easing.Bounce.Out)
+        .onStart(function(){
+          //previous = {x:0,y:0};
+        })
+  			.onUpdate( function(){
+          //ballb.geometry.applyMatrix(new THREE.Matrix4().makeTranslation((this.x - previous.x),(this.y - previous.y),0));
+          ballb.position.y += this.y - previous.y;
+          //ballb.geometry.verticesNeedUpdate = true;
+          //ballb.geometry.normalsNeedUpdate = true;
+          previous.x = this.x;
+          previous.y = this.y;
+          //console.log("update2 prev"+previous.y);
+        }).onComplete(function() {
+          this.x=0,this.y=0;
+          previous = {x:0,y:0};
+          tweenb.start();
+        });
+
+
+        //tweenb.chain(tweenBackb);
+        //tweenBackb.chain(tweenb);
+    }
+
 
     var tempx,tempy,k,ek,vz,tx,ty;
     function goFoward(player, vx, vy, time) {
@@ -185,8 +299,8 @@
           tx = normal(tx);
           ty = normal(ty);
 
-          var target = {x:vx,y:vy,t:tx};
-          var previous = {x:0,y:0,t:0};
+          var target = {x:vx,y:vy,t:tx,t2:ty};
+          var previous = {x:0,y:0,t:0,t2:0};
           var tween = new TWEEN.Tween( {player: player} )
                   .to( target, time )
                   .easing(TWEEN.Easing.Linear.None)
@@ -199,9 +313,11 @@
                       player.geometry.verticesNeedUpdate = true;
                       player.geometry.normalsNeedUpdate = true;
                       camera.position.x += this.t-previous.t;
+                      camera.position.y += this.t2-previous.t2;
                       previous.x = this.x;
                       previous.y = this.y;
                       previous.t = this.t;
+                      previous.t2 = this.t2;
 
                   })
                   .onComplete(function() {
@@ -233,7 +349,6 @@
      * Called when the scene needs to be rendered. Delegates to requestAnimationFrame
      * for future renders
      */
-
      function render() {
        gameCheck();
        if(game){
@@ -245,8 +360,6 @@
        stats.update();
        TWEEN.update();
        //renderer.render(scene, camera);
-       // and render the scene, renderer shouldn't autoclear, we let the composer steps do that themselves
-       // rendering is now done through the composer, which executes the render steps
        renderer.autoClear = false;
        composer.render();
        requestAnimationFrame(render);
@@ -255,7 +368,7 @@
 
     function gameCheck(){
       if(game&&player.position.y<0){
-        alert("   Landing!!!\nScore: "+normal(player.position.x+100)+"m");
+        alert("   Landing!!!\nDistance: "+normal(player.position.x+100)+"m");
         game = false;
       }
     }
